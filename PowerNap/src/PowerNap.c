@@ -30,8 +30,9 @@ static GBitmap *alarm_image;
 static ActionBarLayer *action_bar;
 
 static TextLayer *header_text_layer;
-static TextLayer *body_text_layer;
-static TextLayer *label_text_layer;
+static TextLayer *time_text_layer;
+static TextLayer *min_text_layer;
+static TextLayer *remaining_text_layer;
 
 static BitmapLayer *alarm_layer;
 
@@ -48,8 +49,16 @@ static uint16_t vibrate_count = 0;
 static void update_time() {
     static char body_text[10];
     uint16_t time = (mode == WAKE_MODE) ? nap_time : remaining_nap_time;
-    snprintf(body_text, sizeof(body_text), "%u min", time);
-    text_layer_set_text(body_text_layer, body_text);
+    snprintf(body_text, sizeof(body_text), "%u", time);
+    text_layer_set_text(time_text_layer, body_text);
+    GRect min_frame = layer_get_frame(text_layer_get_layer(min_text_layer));
+    GSize text_size = text_layer_get_content_size(time_text_layer);
+    layer_set_frame(text_layer_get_layer(min_text_layer),
+                    GRect(10 + text_size.w,
+                          min_frame.origin.y,
+                          min_frame.size.w,
+                          min_frame.size.h)
+                    );
 }
 
 static void increment_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -134,8 +143,9 @@ static void set_mode(int new_mode) {
         layer_set_hidden(action_bar_layer_get_layer(action_bar), false);
         // Show "remaining" and all other text layers
         layer_set_hidden(text_layer_get_layer(header_text_layer), false);
-        layer_set_hidden(text_layer_get_layer(body_text_layer), false);
-        layer_set_hidden(text_layer_get_layer(label_text_layer), false);
+        layer_set_hidden(text_layer_get_layer(time_text_layer), false);
+        layer_set_hidden(text_layer_get_layer(min_text_layer), false);
+        layer_set_hidden(text_layer_get_layer(remaining_text_layer), false);
         // Hide alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
         // Sets the remaining time in nap and starts countdown
@@ -157,8 +167,9 @@ static void set_mode(int new_mode) {
         layer_set_hidden(action_bar_layer_get_layer(action_bar), false);
         // Hide "remaining", show all other text layers
         layer_set_hidden(text_layer_get_layer(header_text_layer), false);
-        layer_set_hidden(text_layer_get_layer(body_text_layer), false);
-        layer_set_hidden(text_layer_get_layer(label_text_layer), true);
+        layer_set_hidden(text_layer_get_layer(time_text_layer), false);
+        layer_set_hidden(text_layer_get_layer(min_text_layer), false);
+        layer_set_hidden(text_layer_get_layer(remaining_text_layer), true);
         // Hide alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
         // Stops any timers
@@ -175,8 +186,9 @@ static void set_mode(int new_mode) {
         layer_set_hidden(action_bar_layer_get_layer(action_bar), true);
         // Hide all text layers
         layer_set_hidden(text_layer_get_layer(header_text_layer), true);
-        layer_set_hidden(text_layer_get_layer(body_text_layer), true);
-        layer_set_hidden(text_layer_get_layer(label_text_layer), true);
+        layer_set_hidden(text_layer_get_layer(time_text_layer), true);
+        layer_set_hidden(text_layer_get_layer(min_text_layer), true);
+        layer_set_hidden(text_layer_get_layer(remaining_text_layer), true);
         // Show alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), false);
         // Start repeating vibration
@@ -207,21 +219,27 @@ static void window_load(Window *me) {
     const int16_t width = window_width - ACTION_BAR_WIDTH - 3;
     
     header_text_layer = text_layer_create(GRect(4, 0, width, 60));
-    text_layer_set_font(header_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+    text_layer_set_font(header_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28));
     text_layer_set_background_color(header_text_layer, GColorClear);
     text_layer_set_text(header_text_layer, "Power Nap");
     layer_add_child(layer, text_layer_get_layer(header_text_layer));
     
-    body_text_layer = text_layer_create(GRect(4, 44, width, 60));
-    text_layer_set_font(body_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
-    text_layer_set_background_color(body_text_layer, GColorClear);
-    layer_add_child(layer, text_layer_get_layer(body_text_layer));
+    time_text_layer = text_layer_create(GRect(4, 40, width, 60));
+    text_layer_set_font(time_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+    text_layer_set_background_color(time_text_layer, GColorClear);
+    layer_add_child(layer, text_layer_get_layer(time_text_layer));
     
-    label_text_layer = text_layer_create(GRect(4, 44 + 28, width, 60));
-    text_layer_set_font(label_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-    text_layer_set_background_color(label_text_layer, GColorClear);
-    text_layer_set_text(label_text_layer, "remaining");
-    layer_add_child(layer, text_layer_get_layer(label_text_layer));
+    min_text_layer = text_layer_create(GRect(56, 54, width, 60));
+    text_layer_set_font(min_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+    text_layer_set_background_color(min_text_layer, GColorClear);
+    text_layer_set_text(min_text_layer, "min");
+    layer_add_child(layer, text_layer_get_layer(min_text_layer));
+    
+    remaining_text_layer = text_layer_create(GRect(4, 40 + 42, width, 60));
+    text_layer_set_font(remaining_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+    text_layer_set_background_color(remaining_text_layer, GColorClear);
+    text_layer_set_text(remaining_text_layer, "remaining");
+    layer_add_child(layer, text_layer_get_layer(remaining_text_layer));
     
     alarm_layer = bitmap_layer_create(GRect(0, 0, window_width, window_height));
     bitmap_layer_set_bitmap(alarm_layer, alarm_image);
@@ -236,8 +254,9 @@ static void window_load(Window *me) {
 
 static void window_unload(Window *window) {
     text_layer_destroy(header_text_layer);
-    text_layer_destroy(body_text_layer);
-    text_layer_destroy(label_text_layer);
+    text_layer_destroy(time_text_layer);
+    text_layer_destroy(min_text_layer);
+    text_layer_destroy(remaining_text_layer);
     
     action_bar_layer_destroy(action_bar);
     
