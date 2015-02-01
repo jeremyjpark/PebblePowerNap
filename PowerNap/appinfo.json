@@ -1,0 +1,17 @@
+{
+  "uuid": "a0342870-0241-43ed-918f-4315ef7e6023",
+  "shortName": "PowerNap",
+  "longName": "PowerNap",
+  "companyName": "MakeAwesomeHappen",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
