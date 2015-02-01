@@ -16,7 +16,7 @@
 #define ALARM_MODE 2
 
 // times in milliseconds
-#define ONE_MINUTE 5000
+#define ONE_MINUTE 60000
 #define VIBRATE_DELAY 2000
 
 static Window *window;
