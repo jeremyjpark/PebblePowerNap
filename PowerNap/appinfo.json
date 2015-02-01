@@ -32,6 +32,11 @@
         "type": "png",
         "name": "IMAGE_ACTION_ICON_WAKE",
         "file": "images/action_icon_wake.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_ALARM",
+        "file": "images/alarm.png"
       }
     ]
   }

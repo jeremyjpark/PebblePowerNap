@@ -23,12 +23,15 @@ static GBitmap *action_icon_plus;
 static GBitmap *action_icon_sleep;
 static GBitmap *action_icon_wake;
 static GBitmap *action_icon_minus;
+static GBitmap *alarm_image;
 
 static ActionBarLayer *action_bar;
 
 static TextLayer *header_text_layer;
 static TextLayer *body_text_layer;
 static TextLayer *label_text_layer;
+
+static BitmapLayer *alarm_layer;
 
 static InverterLayer *inverter_layer;
 
@@ -94,6 +97,8 @@ static void set_mode(int new_mode) {
         layer_set_hidden(text_layer_get_layer(header_text_layer), false);
         layer_set_hidden(text_layer_get_layer(body_text_layer), false);
         layer_set_hidden(text_layer_get_layer(label_text_layer), false);
+        // Hide alarm image
+        layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
         // Sets the remaining time in nap and starts countdown
         remaining_nap_time = nap_time;
         timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
@@ -112,6 +117,8 @@ static void set_mode(int new_mode) {
         layer_set_hidden(text_layer_get_layer(header_text_layer), false);
         layer_set_hidden(text_layer_get_layer(body_text_layer), false);
         layer_set_hidden(text_layer_get_layer(label_text_layer), true);
+        // Hide alarm image
+        layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
         // Stops countdown
         app_timer_cancel(timer);
         
@@ -127,6 +134,8 @@ static void set_mode(int new_mode) {
         layer_set_hidden(text_layer_get_layer(header_text_layer), true);
         layer_set_hidden(text_layer_get_layer(body_text_layer), true);
         layer_set_hidden(text_layer_get_layer(label_text_layer), true);
+        // Show alarm image
+        layer_set_hidden(bitmap_layer_get_layer(alarm_layer), false);
         // Vibrate
         vibes_short_pulse();
         
@@ -181,6 +190,10 @@ static void window_load(Window *me) {
     text_layer_set_text(label_text_layer, "remaining");
     layer_add_child(layer, text_layer_get_layer(label_text_layer));
     
+    alarm_layer = bitmap_layer_create(GRect(0, 0, window_width, window_height));
+    bitmap_layer_set_bitmap(alarm_layer, alarm_image);
+    layer_add_child(layer, bitmap_layer_get_layer(alarm_layer));
+    
     inverter_layer = inverter_layer_create(GRect(0, 0, window_width, window_height));
     layer_add_child(layer, inverter_layer_get_layer(inverter_layer));
     
@@ -191,10 +204,13 @@ static void window_load(Window *me) {
 static void window_unload(Window *window) {
     text_layer_destroy(header_text_layer);
     text_layer_destroy(body_text_layer);
+    text_layer_destroy(label_text_layer);
     
     action_bar_layer_destroy(action_bar);
     
     inverter_layer_destroy(inverter_layer);
+    
+    bitmap_layer_destroy(alarm_layer);
 }
 
 static void init(void) {
@@ -202,6 +218,7 @@ static void init(void) {
     action_icon_sleep = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ACTION_ICON_SLEEP);
     action_icon_wake = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ACTION_ICON_WAKE);
     action_icon_minus = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ACTION_ICON_MINUS);
+    alarm_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ALARM);
     
     window = window_create();
     window_set_window_handlers(window, (WindowHandlers) {
@@ -225,6 +242,7 @@ static void deinit(void) {
     gbitmap_destroy(action_icon_sleep);
     gbitmap_destroy(action_icon_wake);
     gbitmap_destroy(action_icon_minus);
+    gbitmap_destroy(alarm_image);
 }
 
 int main(void) {
