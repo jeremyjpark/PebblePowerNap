@@ -22,6 +22,16 @@
         "type": "png",
         "name": "IMAGE_ACTION_ICON_MINUS",
         "file": "images/action_icon_minus.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_ACTION_ICON_SLEEP",
+        "file": "images/action_icon_sleep.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_ACTION_ICON_WAKE",
+        "file": "images/action_icon_wake.png"
       }
     ]
   }
