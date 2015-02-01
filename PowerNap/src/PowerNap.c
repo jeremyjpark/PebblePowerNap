@@ -15,7 +15,8 @@
 #define WAKE_MODE 1
 #define ALARM_MODE 2
 
-#define ONE_MINUTE 5000 // One minute in milliseconds
+// times in milliseconds
+#define ONE_MINUTE 5000
 #define VIBRATE_DELAY 2000
 
 static Window *window;
@@ -42,6 +43,7 @@ static AppTimer *alarm;
 static uint16_t nap_time = NAP_TIME_DEFAULT;
 static uint16_t remaining_nap_time = 0;
 static uint16_t mode = WAKE_MODE;
+static uint16_t vibrate_count = 0;
 
 static void update_time() {
     static char body_text[10];
@@ -107,7 +109,13 @@ static void vibrate() {
 
 static void vibrate_callback(void *data) {
     vibrate();
-    alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
+    vibrate_count++;
+    
+    if (vibrate_count < ONE_MINUTE / VIBRATE_DELAY) {
+        alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
+    } else {
+        set_mode(WAKE_MODE);
+    }
 }
 
 static void set_mode(int new_mode) {
@@ -172,6 +180,7 @@ static void set_mode(int new_mode) {
         // Show alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), false);
         // Start repeating vibration
+        vibrate_count = 0;
         vibrate();
         alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
         
