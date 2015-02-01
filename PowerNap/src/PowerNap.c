@@ -16,6 +16,7 @@
 #define ALARM_MODE 2
 
 #define ONE_MINUTE 5000 // One minute in milliseconds
+#define VIBRATE_DELAY 2000
 
 static Window *window;
 
@@ -36,6 +37,7 @@ static BitmapLayer *alarm_layer;
 static InverterLayer *inverter_layer;
 
 static AppTimer *timer;
+static AppTimer *alarm;
 
 static uint16_t nap_time = NAP_TIME_DEFAULT;
 static uint16_t remaining_nap_time = 0;
@@ -76,6 +78,15 @@ static void decrement_click_handler(ClickRecognizerRef recognizer, void *context
     }
 }
 
+static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *context) {
+    // Toggle the center action bar button to switch between wake and sleep
+    if (mode == WAKE_MODE) {
+        set_mode(SLEEP_MODE);
+    } else {
+        set_mode(WAKE_MODE);
+    }
+}
+
 static void decrease_remaining_time_callback(void *data) {
     remaining_nap_time--;
     
@@ -90,13 +101,13 @@ static void decrease_remaining_time_callback(void *data) {
     update_time();
 }
 
-static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *context) {
-    // Toggle the center action bar button to switch between wake and sleep
-    if (mode == WAKE_MODE) {
-        set_mode(SLEEP_MODE);
-    } else {
-        set_mode(WAKE_MODE);
-    }
+static void vibrate() {
+    vibes_long_pulse();
+}
+
+static void vibrate_callback(void *data) {
+    vibrate();
+    alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
 }
 
 static void set_mode(int new_mode) {
@@ -142,8 +153,9 @@ static void set_mode(int new_mode) {
         layer_set_hidden(text_layer_get_layer(label_text_layer), true);
         // Hide alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
-        // Stops countdown
+        // Stops any timers
         app_timer_cancel(timer);
+        app_timer_cancel(alarm);
         
         update_time();
         
@@ -159,8 +171,9 @@ static void set_mode(int new_mode) {
         layer_set_hidden(text_layer_get_layer(label_text_layer), true);
         // Show alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), false);
-        // Vibrate
-        vibes_short_pulse();
+        // Start repeating vibration
+        vibrate();
+        alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
         
     }
 }

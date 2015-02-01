@@ -6,6 +6,8 @@ static void increment_click_handler(ClickRecognizerRef recognizer, void *context
 static void decrement_click_handler(ClickRecognizerRef recognizer, void *context);
 static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *context);
 static void decrease_remaining_time_callback(void *data);
+static void vibrate();
+static void vibrate_callback(void *data);
 static void set_mode(int new_mode);
 static void click_config_provider(void *context);
 
