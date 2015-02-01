@@ -76,7 +76,7 @@ static void decrease_remaining_time_callback(void *data) {
         set_mode(ALARM_MODE);
     } else {
         // Still time remaining, restart the minute timer
-        app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
+        timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
     }
     
     update_time();
@@ -146,7 +146,7 @@ static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *contex
     // Toggle the center action bar button to switch between wake and sleep
     if (mode == WAKE_MODE) {
         set_mode(SLEEP_MODE);
-    } else {
+    } else if (mode == SLEEP_MODE){
         set_mode(WAKE_MODE);
     }
 }
