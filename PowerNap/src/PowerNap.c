@@ -49,23 +49,31 @@ static void update_time() {
 }
 
 static void increment_click_handler(ClickRecognizerRef recognizer, void *context) {
-    // Prevent time from going above max
-    if (nap_time >= NAP_TIME_MAX) {
-        return;
+    if (mode == WAKE_MODE) {
+        // Prevent time from going above max
+        if (nap_time >= NAP_TIME_MAX) {
+            return;
+        }
+        
+        nap_time++;
+        update_time();
+    } else if (mode == ALARM_MODE) {
+        set_mode(WAKE_MODE);
     }
-    
-    nap_time++;
-    update_time();
 }
 
 static void decrement_click_handler(ClickRecognizerRef recognizer, void *context) {
-    // Prevent time from going below min
-    if (nap_time <= NAP_TIME_MIN) {
-        return;
+    if (mode == WAKE_MODE) {
+        // Prevent time from going below min
+        if (nap_time <= NAP_TIME_MIN) {
+            return;
+        }
+        
+        nap_time--;
+        update_time();
+    } else if (mode == ALARM_MODE) {
+        set_mode(WAKE_MODE);
     }
-    
-    nap_time--;
-    update_time();
 }
 
 static void decrease_remaining_time_callback(void *data) {
@@ -82,6 +90,15 @@ static void decrease_remaining_time_callback(void *data) {
     update_time();
 }
 
+static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *context) {
+    // Toggle the center action bar button to switch between wake and sleep
+    if (mode == WAKE_MODE) {
+        set_mode(SLEEP_MODE);
+    } else {
+        set_mode(WAKE_MODE);
+    }
+}
+
 static void set_mode(int new_mode) {
     mode = new_mode;
     
@@ -91,6 +108,9 @@ static void set_mode(int new_mode) {
         action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_wake);
         // Black background
         layer_set_hidden(inverter_layer_get_layer(inverter_layer), false);
+        // Remove time increment/decrement buttons
+        action_bar_layer_clear_icon(action_bar, BUTTON_ID_UP);
+        action_bar_layer_clear_icon(action_bar, BUTTON_ID_DOWN);
         // Show action bar
         layer_set_hidden(action_bar_layer_get_layer(action_bar), false);
         // Show "remaining" and all other text layers
@@ -111,6 +131,9 @@ static void set_mode(int new_mode) {
         action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_sleep);
         // White background
         layer_set_hidden(inverter_layer_get_layer(inverter_layer), true);
+        // Show time increment/decrement buttons
+        action_bar_layer_set_icon(action_bar, BUTTON_ID_UP, action_icon_plus);
+        action_bar_layer_set_icon(action_bar, BUTTON_ID_DOWN, action_icon_minus);
         // Show action bar
         layer_set_hidden(action_bar_layer_get_layer(action_bar), false);
         // Hide "remaining", show all other text layers
@@ -142,15 +165,6 @@ static void set_mode(int new_mode) {
     }
 }
 
-static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *context) {
-    // Toggle the center action bar button to switch between wake and sleep
-    if (mode == WAKE_MODE) {
-        set_mode(SLEEP_MODE);
-    } else if (mode == SLEEP_MODE){
-        set_mode(WAKE_MODE);
-    }
-}
-
 static void click_config_provider(void *context) {
     // Increment/decrement time can be held down to quickly change
     const uint16_t repeat_interval_ms = 100;
@@ -164,9 +178,6 @@ static void window_load(Window *me) {
     action_bar = action_bar_layer_create();
     action_bar_layer_add_to_window(action_bar, me);
     action_bar_layer_set_click_config_provider(action_bar, click_config_provider);
-    
-    action_bar_layer_set_icon(action_bar, BUTTON_ID_UP, action_icon_plus);
-    action_bar_layer_set_icon(action_bar, BUTTON_ID_DOWN, action_icon_minus);
     
     Layer *layer = window_get_root_layer(me);
     const int16_t window_width = layer_get_frame(layer).size.w;
