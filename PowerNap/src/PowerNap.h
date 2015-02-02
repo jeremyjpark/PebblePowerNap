@@ -8,7 +8,7 @@ static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *contex
 static void decrease_remaining_time_callback(void *data);
 static void vibrate();
 static void vibrate_callback(void *data);
-static void set_mode(int new_mode);
+static void set_mode(uint16_t new_mode);
 static void click_config_provider(void *context);
 
 static void window_load(Window *me);

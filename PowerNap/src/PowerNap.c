@@ -9,7 +9,7 @@
 
 // Minimum and maximum number of minutes for a nap
 #define NAP_TIME_MIN 10
-#define NAP_TIME_MAX 60
+#define NAP_TIME_MAX 90
 
 #define SLEEP_MODE 0
 #define WAKE_MODE 1
@@ -64,12 +64,10 @@ static void update_time() {
 static void increment_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (mode == WAKE_MODE) {
         // Prevent time from going above max
-        if (nap_time >= NAP_TIME_MAX) {
-            return;
+        if (nap_time < NAP_TIME_MAX) {
+            nap_time++;
+            update_time();
         }
-        
-        nap_time++;
-        update_time();
     } else if (mode == ALARM_MODE) {
         set_mode(WAKE_MODE);
     }
@@ -78,12 +76,10 @@ static void increment_click_handler(ClickRecognizerRef recognizer, void *context
 static void decrement_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (mode == WAKE_MODE) {
         // Prevent time from going below min
-        if (nap_time <= NAP_TIME_MIN) {
-            return;
+        if (nap_time > NAP_TIME_MIN) {
+            nap_time--;
+            update_time();
         }
-        
-        nap_time--;
-        update_time();
     } else if (mode == ALARM_MODE) {
         set_mode(WAKE_MODE);
     }
@@ -127,7 +123,7 @@ static void vibrate_callback(void *data) {
     }
 }
 
-static void set_mode(int new_mode) {
+static void set_mode(uint16_t new_mode) {
     mode = new_mode;
     
     if (mode == SLEEP_MODE) {
@@ -201,11 +197,11 @@ static void set_mode(int new_mode) {
 
 static void click_config_provider(void *context) {
     // Increment/decrement time can be held down to quickly change
-    const uint16_t repeat_interval_ms = 100;
+    const uint16_t repeat_interval_ms = 35;
     window_single_repeating_click_subscribe(BUTTON_ID_UP, repeat_interval_ms, (ClickHandler) increment_click_handler);
     window_single_repeating_click_subscribe(BUTTON_ID_DOWN, repeat_interval_ms, (ClickHandler) decrement_click_handler);
     
-    window_single_click_subscribe(BUTTON_ID_SELECT, sleep_wake_click_handler);
+    window_single_click_subscribe(BUTTON_ID_SELECT, (ClickHandler) sleep_wake_click_handler);
 }
 
 static void window_load(Window *me) {
@@ -280,6 +276,11 @@ static void init(void) {
     
     // Get the count from persistent storage for use if it exists, otherwise use the default
     nap_time = persist_exists(NAP_TIME_KEY) ? persist_read_int(NAP_TIME_KEY) : NAP_TIME_DEFAULT;
+    if (nap_time < NAP_TIME_MIN) {
+        nap_time = NAP_TIME_MIN;
+    } else if (nap_time > NAP_TIME_MAX) {
+        nap_time = NAP_TIME_MAX;
+    }
     
     window_stack_push(window, true /* Animated */);
 }
