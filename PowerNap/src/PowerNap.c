@@ -4,6 +4,12 @@
 // Key for saving nap minute count
 #define NAP_TIME_KEY 6789
 
+// Key for saving the wakeup id
+#define WAKEUP_KEY 6790
+
+// Reason for wakeup, arbitrary number
+#define WAKEUP_REASON 1000
+
 // Default number of nap minutes
 #define NAP_TIME_DEFAULT 20
 
@@ -21,30 +27,21 @@
 
 static Window *window;
 
-static GBitmap *action_icon_plus;
-static GBitmap *action_icon_sleep;
-static GBitmap *action_icon_wake;
-static GBitmap *action_icon_minus;
-static GBitmap *alarm_image;
+static GBitmap *action_icon_plus, *action_icon_sleep, *action_icon_wake, *action_icon_minus, *alarm_image;
 
 static ActionBarLayer *action_bar;
-
-static TextLayer *header_text_layer;
-static TextLayer *time_text_layer;
-static TextLayer *min_text_layer;
-static TextLayer *remaining_text_layer;
-
+static TextLayer *header_text_layer, *time_text_layer, *min_text_layer, *remaining_text_layer;
 static BitmapLayer *alarm_layer;
-
 static InverterLayer *inverter_layer;
 
-static AppTimer *timer;
-static AppTimer *alarm;
+static AppTimer *timer, *alarm;
 
 static uint16_t nap_time = NAP_TIME_DEFAULT;
 static uint16_t remaining_nap_time = 0;
 static uint16_t mode = WAKE_MODE;
 static uint16_t vibrate_count = 0;
+
+static WakeupId s_wakeup_id = -1;
 
 static void update_time() {
     static char body_text[10];
@@ -92,6 +89,10 @@ static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *contex
     } else {
         set_mode(WAKE_MODE);
     }
+}
+
+static void wakeup_handler(WakeupId id, int32_t reason) {
+    persist_delete(WAKEUP_KEY);
 }
 
 static void decrease_remaining_time_callback(void *data) {
@@ -147,6 +148,11 @@ static void set_mode(uint16_t new_mode) {
         // Sets the remaining time in nap and starts countdown
         remaining_nap_time = nap_time;
         timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
+        // Schedule an app wakeup
+        time_t wakeup_time = time(NULL) + remaining_nap_time * 60;
+        // TODO: repeatedly reschedule until no error occurs
+        s_wakeup_id = wakeup_schedule(wakeup_time, WAKEUP_REASON, true);
+        persist_write_int(WAKEUP_KEY, s_wakeup_id);
         
         update_time();
         
@@ -171,6 +177,10 @@ static void set_mode(uint16_t new_mode) {
         // Stops any timers
         app_timer_cancel(timer);
         app_timer_cancel(alarm);
+        // Cancel the wakeup
+        wakeup_cancel(s_wakeup_id);
+        s_wakeup_id = -1;
+        persist_delete(WAKEUP_KEY);
         
         update_time();
         
@@ -283,6 +293,17 @@ static void init(void) {
     }
     
     window_stack_push(window, true /* Animated */);
+
+    if (launch_reason() == APP_LAUNCH_WAKEUP) {
+        WakeupId id = 0;
+        int32_t reason = 0;
+        if (wakeup_get_launch_event(&id, &reason)) {
+            wakeup_handler(id, reason);
+        }
+    }
+
+    // Subscribe to Wakeup API
+    wakeup_service_subscribe(wakeup_handler);
 }
 
 static void deinit(void) {
