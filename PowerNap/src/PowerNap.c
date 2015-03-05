@@ -89,9 +89,8 @@ static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *contex
         remaining_nap_time = nap_time;
         timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
 
-        // Schedule an app wakeup
+        // Set the wakeup time to be remaining_nap_time minutes in the future
         time_t wakeup_time = time(NULL) + remaining_nap_time * 60;
-        // TODO: repeatedly reschedule until no error occurs
         s_wakeup_id = wakeup_schedule(wakeup_time, WAKEUP_REASON, true);
         persist_write_int(WAKEUP_ID_KEY, s_wakeup_id);
 
@@ -103,7 +102,10 @@ static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *contex
 
 static void wakeup_handler(WakeupId id, int32_t reason) {
     persist_delete(WAKEUP_ID_KEY);
-    set_mode(ALARM_MODE);
+    s_wakeup_id = -1;
+    if (mode != ALARM_MODE) {
+        set_mode(ALARM_MODE);
+    }
 }
 
 static void decrease_remaining_time_callback(void *data) {
@@ -112,6 +114,11 @@ static void decrease_remaining_time_callback(void *data) {
     if (remaining_nap_time > 0) {
         // Still time remaining, restart the minute timer
         timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
+    } else {
+        // Timer ran out, start the alarm
+        if (mode != ALARM_MODE) {
+            set_mode(ALARM_MODE);
+        }
     }
     
     update_time();
@@ -311,7 +318,7 @@ static void init(void) {
             }
             mode = SLEEP_MODE;
         } else {
-        persist_delete(WAKEUP_ID_KEY);
+            persist_delete(WAKEUP_ID_KEY);
             s_wakeup_id = -1;
         }
     }
