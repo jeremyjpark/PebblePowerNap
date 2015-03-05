@@ -42,7 +42,6 @@ static uint16_t mode = WAKE_MODE;
 static uint16_t vibrate_count = 0;
 
 static WakeupId s_wakeup_id = -1;
-static time_t wakeup_time;
 
 static void update_time() {
     static char body_text[10];
@@ -86,6 +85,16 @@ static void decrement_click_handler(ClickRecognizerRef recognizer, void *context
 static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *context) {
     // Toggle the center action bar button to switch between wake and sleep
     if (mode == WAKE_MODE) {
+        // Sets the remaining time in nap and starts countdown
+        remaining_nap_time = nap_time;
+        timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
+
+        // Schedule an app wakeup
+        time_t wakeup_time = time(NULL) + remaining_nap_time * 60;
+        // TODO: repeatedly reschedule until no error occurs
+        s_wakeup_id = wakeup_schedule(wakeup_time, WAKEUP_REASON, true);
+        persist_write_int(WAKEUP_ID_KEY, s_wakeup_id);
+
         set_mode(SLEEP_MODE);
     } else {
         set_mode(WAKE_MODE);
@@ -144,14 +153,6 @@ static void set_mode(uint16_t new_mode) {
         layer_set_hidden(text_layer_get_layer(remaining_text_layer), false);
         // Hide alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
-        // Sets the remaining time in nap and starts countdown
-        remaining_nap_time = nap_time;
-        timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
-        // Schedule an app wakeup
-        time_t wakeup_time = time(NULL) + remaining_nap_time * 60;
-        // TODO: repeatedly reschedule until no error occurs
-        s_wakeup_id = wakeup_schedule(wakeup_time, WAKEUP_REASON, true);
-        persist_write_int(WAKEUP_ID_KEY, s_wakeup_id);
         
         update_time();
         
@@ -177,7 +178,7 @@ static void set_mode(uint16_t new_mode) {
         app_timer_cancel(timer);
         app_timer_cancel(alarm);
         // Cancel the wakeup
-        wakeup_cancel(s_wakeup_id);
+        wakeup_cancel_all();
         s_wakeup_id = -1;
         persist_delete(WAKEUP_ID_KEY);
         
@@ -290,7 +291,31 @@ static void init(void) {
     } else if (nap_time > NAP_TIME_MAX) {
         nap_time = NAP_TIME_MAX;
     }
-    
+
+    // Check if we have already scheduled a wakeup event
+    if (persist_exists(WAKEUP_ID_KEY)) {
+        s_wakeup_id = persist_read_int(WAKEUP_ID_KEY);
+        // query if event is still valid, otherwise delete
+        time_t wakeup_time;
+        if (wakeup_query(s_wakeup_id, &wakeup_time)) {
+            // Restart the countdown
+            uint16_t remaining_sec = wakeup_time - time(NULL);
+            uint16_t sec_past_min = remaining_sec % 60;
+            uint16_t whole_min = remaining_sec / 60;
+            if (sec_past_min > 0) {
+                remaining_nap_time = whole_min + 1;
+                timer = app_timer_register(sec_past_min * 1000, decrease_remaining_time_callback, NULL);
+            }  else {
+                remaining_nap_time = whole_min;
+                timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
+            }
+            mode = SLEEP_MODE;
+        } else {
+        persist_delete(WAKEUP_ID_KEY);
+            s_wakeup_id = -1;
+        }
+    }
+
     window_stack_push(window, true /* Animated */);
 
     // If the app is launched from a wakeup, call the wakeup handler
