@@ -1,14 +1,14 @@
 #include <pebble.h>
 #include "PowerNap.h"
 
-// Key for saving nap minute count
-#define NAP_TIME_KEY 6789
-
-// Key for saving the wakeup id
-#define WAKEUP_KEY 6790
-
-// Reason for wakeup, arbitrary number
-#define WAKEUP_REASON 1000
+enum {
+    // Key for saving nap minute count
+    NAP_TIME_KEY = 6789,
+    // Keys for wakeup
+    WAKEUP_ID_KEY = 6790,
+    WAKEUP_TIME_KEY = 6791,
+    WAKEUP_REASON = 1000
+};
 
 // Default number of nap minutes
 #define NAP_TIME_DEFAULT 20
@@ -42,6 +42,7 @@ static uint16_t mode = WAKE_MODE;
 static uint16_t vibrate_count = 0;
 
 static WakeupId s_wakeup_id = -1;
+static time_t wakeup_time;
 
 static void update_time() {
     static char body_text[10];
@@ -92,16 +93,14 @@ static void sleep_wake_click_handler(ClickRecognizerRef recognizer, void *contex
 }
 
 static void wakeup_handler(WakeupId id, int32_t reason) {
-    persist_delete(WAKEUP_KEY);
+    persist_delete(WAKEUP_ID_KEY);
+    set_mode(ALARM_MODE);
 }
 
 static void decrease_remaining_time_callback(void *data) {
     remaining_nap_time--;
     
-    if (remaining_nap_time <= 0) {
-        // Time remaining reached 0, start the alarm
-        set_mode(ALARM_MODE);
-    } else {
+    if (remaining_nap_time > 0) {
         // Still time remaining, restart the minute timer
         timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
     }
@@ -152,7 +151,7 @@ static void set_mode(uint16_t new_mode) {
         time_t wakeup_time = time(NULL) + remaining_nap_time * 60;
         // TODO: repeatedly reschedule until no error occurs
         s_wakeup_id = wakeup_schedule(wakeup_time, WAKEUP_REASON, true);
-        persist_write_int(WAKEUP_KEY, s_wakeup_id);
+        persist_write_int(WAKEUP_ID_KEY, s_wakeup_id);
         
         update_time();
         
@@ -180,7 +179,7 @@ static void set_mode(uint16_t new_mode) {
         // Cancel the wakeup
         wakeup_cancel(s_wakeup_id);
         s_wakeup_id = -1;
-        persist_delete(WAKEUP_KEY);
+        persist_delete(WAKEUP_ID_KEY);
         
         update_time();
         
@@ -294,6 +293,7 @@ static void init(void) {
     
     window_stack_push(window, true /* Animated */);
 
+    // If the app is launched from a wakeup, call the wakeup handler
     if (launch_reason() == APP_LAUNCH_WAKEUP) {
         WakeupId id = 0;
         int32_t reason = 0;
