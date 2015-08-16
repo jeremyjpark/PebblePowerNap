@@ -23,8 +23,8 @@ enum {
 
 // times in milliseconds
 #define ONE_MINUTE 60000
-#define VIBRATE_DELAY 2000
 #define ONE_HOUR 3600000 // 3 600 000 milliseconds (60 * ONE_MINUTE)
+#define VIBRATE_DELAY 2000
 
 static Window *window;
 
@@ -47,7 +47,7 @@ static uint16_t vibrate_count = 0;
 static WakeupId s_wakeup_id = -1;
 
 static void update_time() {
-    static char body_text[10]; 
+    static char body_text[10];
     uint16_t time = (mode == WAKE_MODE) ? nap_time : remaining_nap_time;
     snprintf(body_text, sizeof(body_text), "%u", time);
     text_layer_set_text(time_text_layer, body_text);
@@ -113,7 +113,7 @@ static void wakeup_handler(WakeupId id, int32_t reason) {
 
 static void decrease_remaining_time_callback(void *data) {
     remaining_nap_time--;
-    
+
     if (remaining_nap_time > 0) {
         // Still time remaining, restart the minute timer
         timer = app_timer_register(ONE_MINUTE, decrease_remaining_time_callback, NULL);
@@ -123,7 +123,7 @@ static void decrease_remaining_time_callback(void *data) {
             set_mode(ALARM_MODE);
         }
     }
-    
+
     update_time();
 }
 
@@ -134,7 +134,7 @@ static void vibrate() {
 static void vibrate_callback(void *data) {
     vibrate();
     vibrate_count++;
-    
+
     if (vibrate_count < ONE_MINUTE / VIBRATE_DELAY) {
         alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
     } else {
@@ -144,9 +144,9 @@ static void vibrate_callback(void *data) {
 
 static void set_mode(uint16_t new_mode) {
     mode = new_mode;
-    
+
     if (mode == SLEEP_MODE) {
-        
+
         // Show sun icon in action bar
         action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_wake);
         // Black background
@@ -163,11 +163,11 @@ static void set_mode(uint16_t new_mode) {
         layer_set_hidden(text_layer_get_layer(remaining_text_layer), false);
         // Hide alarm image
         layer_set_hidden(bitmap_layer_get_layer(alarm_layer), true);
-        
+
         update_time();
-        
+
     } else if (mode == WAKE_MODE) {
-        
+
         // Show moon icon in action bar
         action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_sleep);
         // White background
@@ -191,11 +191,11 @@ static void set_mode(uint16_t new_mode) {
         wakeup_cancel_all();
         s_wakeup_id = -1;
         persist_delete(WAKEUP_ID_KEY);
-        
+
         update_time();
-        
+
     } else if (mode == ALARM_MODE) {
-        
+
         // White background
         layer_set_hidden(inverter_layer_get_layer(inverter_layer), true);
         // Hide action bar
@@ -211,7 +211,7 @@ static void set_mode(uint16_t new_mode) {
         vibrate_count = 0;
         vibrate();
         alarm = app_timer_register(VIBRATE_DELAY, vibrate_callback, NULL);
-        
+
     }
 }
 
@@ -220,7 +220,7 @@ static void click_config_provider(void *context) {
     const uint16_t repeat_interval_ms = 35;
     window_single_repeating_click_subscribe(BUTTON_ID_UP, repeat_interval_ms, (ClickHandler) increment_click_handler);
     window_single_repeating_click_subscribe(BUTTON_ID_DOWN, repeat_interval_ms, (ClickHandler) decrement_click_handler);
-    
+
     window_single_click_subscribe(BUTTON_ID_SELECT, (ClickHandler) sleep_wake_click_handler);
 }
 
@@ -228,42 +228,42 @@ static void window_load(Window *me) {
     action_bar = action_bar_layer_create();
     action_bar_layer_add_to_window(action_bar, me);
     action_bar_layer_set_click_config_provider(action_bar, click_config_provider);
-    
+
     Layer *layer = window_get_root_layer(me);
     const int16_t window_width = layer_get_frame(layer).size.w;
     const int16_t window_height = layer_get_frame(layer).size.h;
     const int16_t width = window_width - ACTION_BAR_WIDTH - 3;
-    
+
     header_text_layer = text_layer_create(GRect(4, 0, width, 60));
     text_layer_set_font(header_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28));
     text_layer_set_background_color(header_text_layer, GColorClear);
     text_layer_set_text(header_text_layer, "Power Nap");
     layer_add_child(layer, text_layer_get_layer(header_text_layer));
-    
+
     time_text_layer = text_layer_create(GRect(4, 40, width, 60));
     text_layer_set_font(time_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
     text_layer_set_background_color(time_text_layer, GColorClear);
     layer_add_child(layer, text_layer_get_layer(time_text_layer));
-    
+
     min_text_layer = text_layer_create(GRect(56, 54, width, 60));
     text_layer_set_font(min_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
     text_layer_set_background_color(min_text_layer, GColorClear);
     text_layer_set_text(min_text_layer, "min");
     layer_add_child(layer, text_layer_get_layer(min_text_layer));
-    
+
     remaining_text_layer = text_layer_create(GRect(4, 40 + 42, width, 60));
     text_layer_set_font(remaining_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
     text_layer_set_background_color(remaining_text_layer, GColorClear);
     text_layer_set_text(remaining_text_layer, "remaining");
     layer_add_child(layer, text_layer_get_layer(remaining_text_layer));
-    
+
     alarm_layer = bitmap_layer_create(GRect(0, 0, window_width, window_height));
     bitmap_layer_set_bitmap(alarm_layer, alarm_image);
     layer_add_child(layer, bitmap_layer_get_layer(alarm_layer));
-    
+
     inverter_layer = inverter_layer_create(GRect(0, 0, window_width, window_height));
     layer_add_child(layer, inverter_layer_get_layer(inverter_layer));
-    
+
     update_time();
     set_mode(mode);
 }
@@ -273,11 +273,11 @@ static void window_unload(Window *window) {
     text_layer_destroy(time_text_layer);
     text_layer_destroy(min_text_layer);
     text_layer_destroy(remaining_text_layer);
-    
+
     action_bar_layer_destroy(action_bar);
-    
+
     inverter_layer_destroy(inverter_layer);
-    
+
     bitmap_layer_destroy(alarm_layer);
 }
 
@@ -287,13 +287,13 @@ static void init(void) {
     action_icon_wake = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ACTION_ICON_WAKE);
     action_icon_minus = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ACTION_ICON_MINUS);
     alarm_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_ALARM);
-    
+
     window = window_create();
     window_set_window_handlers(window, (WindowHandlers) {
         .load = window_load,
         .unload = window_unload,
     });
-    
+
     // Get the count from persistent storage for use if it exists, otherwise use the default
     nap_time = persist_exists(NAP_TIME_KEY) ? persist_read_int(NAP_TIME_KEY) : NAP_TIME_DEFAULT;
     if (nap_time < NAP_TIME_MIN) {
@@ -344,9 +344,9 @@ static void init(void) {
 static void deinit(void) {
     // Save the count into persistent storage on app exit
     persist_write_int(NAP_TIME_KEY, nap_time);
-    
+
     window_destroy(window);
-    
+
     gbitmap_destroy(action_icon_plus);
     gbitmap_destroy(action_icon_sleep);
     gbitmap_destroy(action_icon_wake);
