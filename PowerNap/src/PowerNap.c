@@ -24,6 +24,7 @@ enum {
 // times in milliseconds
 #define ONE_MINUTE 60000
 #define VIBRATE_DELAY 2000
+#define ONE_HOUR 3600000 // 3 600 000 milliseconds (60 * ONE_MINUTE)
 
 static Window *window;
 
@@ -37,6 +38,8 @@ static InverterLayer *inverter_layer;
 static AppTimer *timer, *alarm;
 
 static uint16_t nap_time = NAP_TIME_DEFAULT;
+static uint16_t nap_hour = nap_time / ONE_HOUR;
+static uint16_t nap_minute = nap_time % ONE_HOUR; // is this part even necessary??
 static uint16_t remaining_nap_time = 0;
 static uint16_t mode = WAKE_MODE;
 static uint16_t vibrate_count = 0;
@@ -44,7 +47,7 @@ static uint16_t vibrate_count = 0;
 static WakeupId s_wakeup_id = -1;
 
 static void update_time() {
-    static char body_text[10];
+    static char body_text[10]; 
     uint16_t time = (mode == WAKE_MODE) ? nap_time : remaining_nap_time;
     snprintf(body_text, sizeof(body_text), "%u", time);
     text_layer_set_text(time_text_layer, body_text);
