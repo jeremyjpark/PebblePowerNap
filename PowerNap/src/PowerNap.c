@@ -48,8 +48,8 @@ static WakeupId s_wakeup_id = -1;
 
 static void update_time() {
     static char body_text[10];
-    uint16_t time = (mode == WAKE_MODE) ? nap_time : remaining_nap_time;
-    snprintf(body_text, sizeof(body_text), "%u", time);
+    uint16_t time[2] = (mode == WAKE_MODE) ? ({nap_time / ONE_HOUR, nap_time % ONE_HOUR}) : (remaining_nap_time / ONE_HOUR, remaining_nap_time % ONE_HOUR);
+    snprintf(body_text, sizeof(body_text), "%u:%u", time[0], time[1]);
     text_layer_set_text(time_text_layer, body_text);
     GRect min_frame = layer_get_frame(text_layer_get_layer(min_text_layer));
     GSize text_size = text_layer_get_content_size(time_text_layer);
