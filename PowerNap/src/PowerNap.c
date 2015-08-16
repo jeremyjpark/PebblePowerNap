@@ -15,7 +15,7 @@ enum {
 
 // Minimum and maximum number of minutes for a nap
 #define NAP_TIME_MIN 10
-#define NAP_TIME_MAX 90
+#define NAP_TIME_MAX 600
 
 #define SLEEP_MODE 0
 #define WAKE_MODE 1
