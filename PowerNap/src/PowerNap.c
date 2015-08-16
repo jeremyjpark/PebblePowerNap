@@ -23,9 +23,8 @@ enum {
 
 // times in milliseconds
 #define ONE_MINUTE 60000
-#define ONE_HOUR 3600000 // 3 600 000 milliseconds (60 * ONE_MINUTE)
 #define VIBRATE_DELAY 2000
-
+#define ONE_HOUR 60 // divide the nap_time (assuming that this is in minutes) to get the number of hours, floor div
 static Window *window;
 
 static GBitmap *action_icon_plus, *action_icon_sleep, *action_icon_wake, *action_icon_minus, *alarm_image;
@@ -37,19 +36,27 @@ static InverterLayer *inverter_layer;
 
 static AppTimer *timer, *alarm;
 
-static uint16_t nap_time = NAP_TIME_DEFAULT;
-static uint16_t nap_hour = nap_time / ONE_HOUR;
-static uint16_t nap_minute = nap_time % ONE_HOUR; // is this part even necessary??
-static uint16_t remaining_nap_time = 0;
-static uint16_t mode = WAKE_MODE;
-static uint16_t vibrate_count = 0;
+static uint32_t nap_time = NAP_TIME_DEFAULT;
+static uint32_t nap_hours = ONE_HOUR;
+static uint32_t remaining_nap_time = 0;
+static uint32_t mode = WAKE_MODE;
+static uint32_t vibrate_count = 0;
 
 static WakeupId s_wakeup_id = -1;
 
 static void update_time() {
     static char body_text[10];
-    uint16_t time[2] = (mode == WAKE_MODE) ? ({nap_time / ONE_HOUR, nap_time % ONE_HOUR}) : (remaining_nap_time / ONE_HOUR, remaining_nap_time % ONE_HOUR);
-    snprintf(body_text, sizeof(body_text), "%u:%u", time[0], time[1]);
+//     uint32_t time[2] = (mode == WAKE_MODE) ? {(nap_time / nap_hours), (nap_time % nap_hours)} : {(remaining_nap_time / nap_hours), (remaining_nap_time % nap_hours)};
+    uint32_t time[2];
+    if (mode == WAKE_MODE) {
+       time[0] = (nap_time / nap_hours); 
+       time[1] = (nap_time % nap_hours);
+    }
+    else {
+       time[0] = (remaining_nap_time / nap_hours); 
+       time[1] = (remaining_nap_time % nap_hours);
+    }
+    snprintf(body_text, sizeof(body_text), "%ld:%ld", time[0], time[1]);
     text_layer_set_text(time_text_layer, body_text);
     GRect min_frame = layer_get_frame(text_layer_get_layer(min_text_layer));
     GSize text_size = text_layer_get_content_size(time_text_layer);
