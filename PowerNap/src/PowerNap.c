@@ -11,15 +11,16 @@ enum {
 };
 
 // Default number of nap minutes
-#define NAP_TIME_DEFAULT 20
+#define NAP_TIME_DEFAULT 10
 
 // Minimum and maximum number of minutes for a nap
-#define NAP_TIME_MIN 10
-#define NAP_TIME_MAX 600
+#define NAP_TIME_MIN 1
+#define NAP_TIME_MAX 599
 
 #define SLEEP_MODE 0
 #define WAKE_MODE 1
 #define ALARM_MODE 2
+#define HOUR_MODE 3
 
 // times in milliseconds
 #define ONE_MINUTE 60000
@@ -27,7 +28,7 @@ enum {
 #define ONE_HOUR 60 // divide the nap_time (assuming that this is in minutes) to get the number of hours, floor div
 static Window *window;
 
-static GBitmap *action_icon_plus, *action_icon_sleep, *action_icon_wake, *action_icon_minus, *alarm_image;
+static GBitmap *action_icon_plus, *action_icon_sleep, *action_icon_wake, *action_icon_minus, *action_icon_next, *alarm_image;
 
 static ActionBarLayer *action_bar;
 static TextLayer *header_text_layer, *time_text_layer, *min_text_layer, *remaining_text_layer;
@@ -56,7 +57,12 @@ static void update_time() {
        time[0] = (remaining_nap_time / nap_hours); 
        time[1] = (remaining_nap_time % nap_hours);
     }
-    snprintf(body_text, sizeof(body_text), "%ld:%ld", time[0], time[1]);
+    if (time[1] < 10) {
+      snprintf(body_text, sizeof(body_text), " %ld:0%ld", time[0], time[1]);
+    } else {
+      snprintf(body_text, sizeof(body_text), " %ld:%ld", time[0], time[1]);
+    }
+//     snprintf(body_text, sizeof(body_text), "%ld:%ld", time[0], time[1]);
     text_layer_set_text(time_text_layer, body_text);
     GRect min_frame = layer_get_frame(text_layer_get_layer(min_text_layer));
     GSize text_size = text_layer_get_content_size(time_text_layer);
@@ -173,10 +179,11 @@ static void set_mode(uint16_t new_mode) {
 
         update_time();
 
-    } else if (mode == WAKE_MODE) {
+    } else if (mode == WAKE_MODE) { // This mode is effectively now for setting the timer
 
         // Show moon icon in action bar
-        action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_sleep);
+        // should change this to the next button
+        action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_next);
         // White background
         layer_set_hidden(inverter_layer_get_layer(inverter_layer), true);
         // Show time increment/decrement buttons
@@ -255,7 +262,7 @@ static void window_load(Window *me) {
     min_text_layer = text_layer_create(GRect(56, 54, width, 60));
     text_layer_set_font(min_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
     text_layer_set_background_color(min_text_layer, GColorClear);
-    text_layer_set_text(min_text_layer, "min");
+    text_layer_set_text(min_text_layer, "");
     layer_add_child(layer, text_layer_get_layer(min_text_layer));
 
     remaining_text_layer = text_layer_create(GRect(4, 40 + 42, width, 60));
