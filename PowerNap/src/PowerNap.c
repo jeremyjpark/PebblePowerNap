@@ -28,7 +28,7 @@ enum {
 
 static Window *window;
 
-static GBitmap *action_icon_plus, *action_icon_sleep, *action_icon_wake, *action_icon_minus, *alarm_image;
+static GBitmap *action_icon_plus, *action_icon_sleep, *action_icon_wake, *action_icon_minus, *action_icon_next, *alarm_image;
 
 static ActionBarLayer *action_bar;
 static TextLayer *header_text_layer, *time_text_layer, *min_text_layer, *remaining_text_layer;

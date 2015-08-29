@@ -1,43 +1,53 @@
 {
-  "uuid": "a0342870-0241-43ed-918f-4315ef7e6023",
-  "shortName": "Power Nap",
-  "longName": "Power Nap",
-  "companyName": "Jessica Yeh",
-  "versionCode": 1,
-  "versionLabel": "1.2",
-  "watchapp": {
-    "watchface": false
-  },
-  "appKeys": {
-    "dummy": 0
-  },
-  "resources": {
-    "media": [
-      {
-        "type": "png",
-        "name": "IMAGE_ACTION_ICON_PLUS",
-        "file": "images/action_icon_plus.png"
-      },
-      {
-        "type": "png",
-        "name": "IMAGE_ACTION_ICON_MINUS",
-        "file": "images/action_icon_minus.png"
-      },
-      {
-        "type": "png",
-        "name": "IMAGE_ACTION_ICON_SLEEP",
-        "file": "images/action_icon_sleep.png"
-      },
-      {
-        "type": "png",
-        "name": "IMAGE_ACTION_ICON_WAKE",
-        "file": "images/action_icon_wake.png"
-      },
-      {
-        "type": "png",
-        "name": "IMAGE_ALARM",
-        "file": "images/alarm.png"
-      }
-    ]
-  }
+    "appKeys": {
+        "dummy": 0
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Jessica Yeh",
+    "longName": "Power Nap",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/action_icon_next.png",
+                "name": "action_icon_next",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/action_icon_sleep.png",
+                "name": "IMAGE_ACTION_ICON_SLEEP",
+                "type": "png"
+            },
+            {
+                "file": "images/action_icon_wake.png",
+                "name": "IMAGE_ACTION_ICON_WAKE",
+                "type": "png"
+            },
+            {
+                "file": "images/action_icon_minus.png",
+                "name": "IMAGE_ACTION_ICON_MINUS",
+                "type": "png"
+            },
+            {
+                "file": "images/action_icon_plus.png",
+                "name": "IMAGE_ACTION_ICON_PLUS",
+                "type": "png"
+            },
+            {
+                "file": "images/alarm.png",
+                "name": "IMAGE_ALARM",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "Power Nap",
+    "uuid": "a0342870-0241-43ed-918f-4315ef7e6023",
+    "versionCode": 1,
+    "versionLabel": "1.2",
+    "watchapp": {
+        "watchface": false
+    }
 }
