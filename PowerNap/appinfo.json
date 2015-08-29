@@ -5,15 +5,15 @@
     "capabilities": [
         ""
     ],
-    "companyName": "SJ",
+    "companyName": "Jessica Yeh",
     "longName": "Power Nap",
     "projectType": "native",
     "resources": {
         "media": [
             {
-                "file": "images/alarm.png",
-                "name": "IMAGE_ALARM",
-                "type": "png"
+                "file": "images/action_icon_next.png",
+                "name": "action_icon_next",
+                "type": "png-trans"
             },
             {
                 "file": "images/action_icon_sleep.png",
@@ -21,8 +21,8 @@
                 "type": "png"
             },
             {
-                "file": "images/action_icon_plus.png",
-                "name": "IMAGE_ACTION_ICON_PLUS",
+                "file": "images/action_icon_wake.png",
+                "name": "IMAGE_ACTION_ICON_WAKE",
                 "type": "png"
             },
             {
@@ -31,8 +31,13 @@
                 "type": "png"
             },
             {
-                "file": "images/action_icon_wake.png",
-                "name": "IMAGE_ACTION_ICON_WAKE",
+                "file": "images/action_icon_plus.png",
+                "name": "IMAGE_ACTION_ICON_PLUS",
+                "type": "png"
+            },
+            {
+                "file": "images/alarm.png",
+                "name": "IMAGE_ALARM",
                 "type": "png"
             }
         ]
